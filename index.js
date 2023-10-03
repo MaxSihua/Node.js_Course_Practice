@@ -6,11 +6,9 @@ const serverIsWorking = {
     message: 'Server is working!'
 };
 
-// Підключення до Swagger
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
-// Swagger опції
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -21,21 +19,18 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${port}`, // Потрібно використовувати обратні кавички (`) для вставки змінної
+        url: `http://localhost:${port}`, 
         description: 'Local server',
       },
     ],
   },
-  apis: ['index.js'], // Файл, де описані ваші маршрути
+  apis: ['index.js'], 
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Описуйте ваші маршрути тут
-
-// Маршрут для перевірки працездатності (health-check)
 /**
  * @swagger
  * /health-check:
@@ -62,7 +57,6 @@ app.get('/about', (req, res) => {
     res.send('about');
 });
 
-//Маршрут для перевірки працездатності (acd або abcd)
 /**
  * @swagger
  * /ab?cd:
@@ -76,12 +70,10 @@ app.get('/ab?cd', (req, res) => {
     res.send('ab?cd');
 });
 
-// Error handling middleware for 404 Not Found
 app.use((req, res, next) => {
     res.status(404).json({ error: 'Not Found' });
 });
 
-// Error handling middleware for 500 Internal Server Error
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Internal Server Error' });

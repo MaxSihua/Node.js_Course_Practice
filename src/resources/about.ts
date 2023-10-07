@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+
 
 export const aboutRouter = Router();
 
@@ -11,7 +12,7 @@ export const aboutRouter = Router();
  *       200:
  *         description: Information about the About page
  */
-aboutRouter.get('/', (req, res) => {
+aboutRouter.get('/', (req: Request, res: Response): void => {
   res.send('about');
 });
 

@@ -1,5 +1,4 @@
-
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 
 export const healthCheckRouter = Router();
 
@@ -12,7 +11,7 @@ export const healthCheckRouter = Router();
  *       200:
  *         description: Server is up and running
  */
-healthCheckRouter.get('/', (req, res) => {
+healthCheckRouter.get('/', (req: Request, res: Response): void => {
     res.json({ status: 'ok', message: 'Server is working!' });
   });
   

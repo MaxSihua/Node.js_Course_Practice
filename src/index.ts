@@ -1,7 +1,7 @@
 import express, { Request, Response, Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 
-import { ServerSatatus } from './assets/interface'
+import { ServerSatatus } from './interface/interface'
 import { swaggerSpec } from './swagger/configs';
 
 const app: Application = express();

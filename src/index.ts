@@ -1,30 +1,23 @@
 import express, { Request, Response, Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 
-import { ServerSatatus } from './interface/interface'
 import { swaggerSpec } from './swagger/configs';
 
-const app: Application = express();
-const port = 3000;
-const serverIsWorking: ServerSatatus = {
-  status: 'ok',
-  message: 'Server is working!',
-};
+import { healthCheckRouter } from './resources/health-check.router';
+import { aboutRouter } from './resources/about.router';
+import { abcdRouter } from './resources/ab-сd.router';
+
+export const app: Application = express();
+export const port = 3000;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 
-app.get('/health-check', (req: Request, res: Response): void => {
-  res.json(serverIsWorking);
-});
+app.use('/health-check', healthCheckRouter); 
 
-app.get('/about', (req: Request, res: Response): void => {
-  res.send('about');
-});
+app.use('/about', aboutRouter);
 
-app.get('/ab?cd', (req: Request, res: Response): void => {
-  res.send('ab?cd');
-});
+app.get('/ab?cd', abcdRouter);
 
 app.use((req: Request, res: Response): void => {
   res.status(404).json({ error: 'Not Found' });

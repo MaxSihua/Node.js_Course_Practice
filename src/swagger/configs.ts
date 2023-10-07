@@ -1,6 +1,5 @@
 import swaggerJsdoc, { OAS3Definition } from "swagger-jsdoc";
-
-const port = 3000;
+import { port } from '../index';
 
 const swaggerOptions: OAS3Definition = {
     swaggerDefinition: {
@@ -17,7 +16,7 @@ const swaggerOptions: OAS3Definition = {
         },
       ],
     },
-    apis: ['src/swagger/resources.ts'],
+    apis: ['src/resources/*.ts'],
     openapi: '',
     info: {
       title: 'test swagger',

@@ -19,3 +19,5 @@ abcdRouter.get('/ab?cd', (req: Request, res: Response): void => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+  res.send('ab?cd');
+});

@@ -25,8 +25,3 @@ aboutRouter.get('/', (req: Request, res: Response): void => {
       console.error(error);
       res.status(500).json({ error: "Internal server error." });
   }
-});
-
-
-
-

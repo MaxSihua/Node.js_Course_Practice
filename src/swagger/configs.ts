@@ -1,6 +1,5 @@
 import swaggerJsdoc, { OAS3Definition } from "swagger-jsdoc";
-
-export const port = 3000;
+import { port } from "../configs";
 
 const swaggerOptions: OAS3Definition = {
     swaggerDefinition: {

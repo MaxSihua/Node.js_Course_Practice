@@ -6,7 +6,7 @@ import { swaggerSpec } from './swagger/configs';
 import { healthCheckRouter } from './resources/health-check';
 import { aboutRouter } from './resources/about';
 import { abcdRouter } from './resources/ab-сd';
-import { port } from './swagger/configs';
+import { port } from './configs';
 
 export const app: Application = express();
 

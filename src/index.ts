@@ -1,7 +1,6 @@
 import express, { Request, Response, Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { connectToDb, getDb } from './db';
-import { Db } from 'mongodb';
 
 import { port } from './configs';
 import { aboutRouter } from './resources/about';
@@ -17,9 +16,10 @@ import { getAllGenresRouter,
   addNewGenreRouter,
   updateGenreByTitleRouter,
   deleteGenreByIdRouter } from './resources/genre'
+import { Connection } from 'mongoose';
 
 const app: Application = express();
-export let db: Db;
+export let db: Connection;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

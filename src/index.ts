@@ -1,6 +1,7 @@
 import express, { Request, Response, Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { connectToDb, getDb } from './db';
+
 import { port } from './configs';
 import { aboutRouter } from './resources/about';
 import { healthCheckRouter } from './resources/health-check';

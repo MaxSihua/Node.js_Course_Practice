@@ -239,8 +239,8 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
     const id = req.params.id;
   
     try {
-        const result = await db.collection('movies').deleteOne({ _id: new ObjectId(id) });
-  
+        const result = await db.collection('movies').deleteOne({ id: new ObjectId(id) });
+
         if (result.deletedCount === 0) {
             res.status(404).json({ error: "Movie not found." });
         } else {

@@ -1,12 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../index';
-import { ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
+import BadRequestError from '../errors/BadRequestError';
 
 export const getAllMoviesRouter = Router();
 export const getMoviesByGenreRouter = Router();
 export const addNewMovieRouter = Router();
 export const updateMovieByTitleRouter = Router();
 export const deleteMovieByIdRouter = Router();
+
+const ObjectId = mongoose.Types.ObjectId;
 
 /**
  * @swagger
@@ -23,17 +26,17 @@ export const deleteMovieByIdRouter = Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Movie'
- *       500:
- *         description: Internal server error.
+ *       404:
+ *         description: No movies was found.
  */
 getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-    try {
-        const movies = await db.collection('movies').find().toArray();
-        res.status(200).json(movies);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
-    }
+  const movies = await db.collection('movies').find().toArray();
+
+  if (movies.length === 0) {
+      throw new BadRequestError({code: 404, message: "No movies was found." });
+  }
+
+  res.status(200).json(movies);
   });
   
   /**
@@ -59,24 +62,16 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *               items:
    *                 $ref: '#/components/schemas/Movie'
    *       404:
-   *         description: Genre not found.
-   *       500:
-   *         description: Internal server error.
+   *         description: Movie with title was not found.
    */
   getMoviesByGenreRouter.get('/:name', async (req: Request, res: Response): Promise<void> => {
-    try {
-      const name = req.params.name;
-      const movies = await db.collection('movies').find({ genre: name }).toArray();
-  
-      if (movies.length === 0) {
-        res.status(404).json({ error: "Genre not found." });
-      } else {
+    const { name } = req.params;
+    const movies = await db.collection('movies').find({ genre: name }).toArray();
+
+    if (movies.length === 0) {
+        throw new BadRequestError({code: 404, message: `Movie with title: "${name}" was not found.`});
+    } 
         res.status(200).json(movies);
-      }
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Internal server error." });
-    }
   });
   
   
@@ -119,7 +114,9 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       201:
    *         description: Movie added successfully.
    *       400:
-   *         description: Bad request - Invalid data provided.
+   *         description: Title was not provided.
+   *       404:
+   *         description: Movie was not added.
    */
   
   addNewMovieRouter.post('/:title', async (req: Request, res: Response): Promise<void> => {
@@ -132,18 +129,17 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
     };
   
     if (!title) {
-        res.status(400).json({ error: "Title is required." });
-        return;
+      throw new BadRequestError({code: 400, message: "Title was not provided."});
     }
-  
-    try {
-        await db.collection('movies').insertOne(movie);
-        const movies = await db.collection('movies').find().toArray();
-        res.status(201).json(movies);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+
+    const movieAdded = await db.collection('movies').insertOne(movie);
+
+    if(!movieAdded.acknowledged) {
+      throw new BadRequestError({code: 404, message: "Movie was not added."});
     }
+
+    const movies = await db.collection('movies').find().toArray();
+    res.status(201).json(movies);
   });
   
   /**
@@ -185,34 +181,38 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       200:
    *         description: Movie updated successfully.
    *       400:
-   *         description: Bad request - Invalid data provided.
+   *         description: Title was not provided.
    *       404:
-   *         description: Movie not found.
+   *         description: No movies with this name was found
    */
   updateMovieByTitleRouter.put('/:title', async (req: Request, res: Response): Promise<void> => {
     const title = req.params.title;
-    const movie = await db.collection('movies').findOne({ title: title });
-  
-    if (!movie) {
-        res.status(404).json({ error: "Movie not found." });
-        return;
+
+    if (!title) {
+      throw new BadRequestError({code: 400, message: "Title was not provided."});
     }
-  
+
+    const movie = await db.collection('movies').findOne({ title: title });
+
+    if (!movie) {
+        throw new BadRequestError({code: 404, message: "No movies with this name was found"});
+    }
+
     const editedMovie = {
         "title": title + '1',
         "genre": movie.genre,
         "releaseDate": movie.releaseDate,
         "description": movie.description
     };
-  
-    try {
-        await db.collection('movies').updateOne({ title: title }, { $set: editedMovie });
-        const movieCollection = await db.collection('movies').find().toArray();
-        res.status(200).json(movieCollection);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+
+    const movieUpadated = await db.collection('movies').updateOne({ title: title }, { $set: editedMovie });
+
+    if (!movieUpadated.acknowledged) {
+        throw new BadRequestError({code: 404, message: "No movies was modified."});
     }
+
+    const movieCollection = await db.collection('movies').find().toArray();
+    res.status(200).json(movieCollection);
   });
   
   /**
@@ -233,22 +233,20 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       200:
    *         description: Movie deleted successfully.
    *       404:
-   *         description: Movie not found.
+   *         description: No movies was deleted.
    */
   deleteMovieByIdRouter.delete('/:id', async (req: Request, res: Response): Promise<void> => {
-    const id = req.params.id;
-  
-    try {
-        const result = await db.collection('movies').deleteOne({ id: new ObjectId(id) });
+    const { id } = req.params;
 
-        if (result.deletedCount === 0) {
-            res.status(404).json({ error: "Movie not found." });
-        } else {
-            const movieCollection = await db.collection('movies').find().toArray();
-            res.status(200).json(movieCollection);
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+    if(!id) {
+      throw new BadRequestError({code: 400, message: "No id provided."});
     }
+  
+    const result = await db.collection('movies').deleteOne({ id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+        throw new BadRequestError({code: 404, message: "No movies was deleted."});
+    }
+    const movieCollection = await db.collection('movies').find().toArray();
+    res.status(200).json(movieCollection);
   });

@@ -1,6 +1,8 @@
-import express, { Request, Response, Application } from 'express';
+import express, { Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { connectToDb, getDb } from './db';
+import { Connection } from 'mongoose';
+import "express-async-errors";
 
 import { port } from './configs';
 import { aboutRouter } from './resources/about';
@@ -16,7 +18,7 @@ import { getAllGenresRouter,
   addNewGenreRouter,
   updateGenreByTitleRouter,
   deleteGenreByIdRouter } from './resources/genre'
-import { Connection } from 'mongoose';
+import { errorHandler } from './middlewares/errors';
 
 const app: Application = express();
 export let db: Connection;
@@ -49,17 +51,9 @@ app.use('/genres', updateGenreByTitleRouter);
 
 app.use('/genres', deleteGenreByIdRouter);
 
-app.use((req: Request, res: Response): void => {
-  res.status(404).json({ error: 'Not Found' });
-});
-
-app.use((err: Error, req: Request, res: Response): void => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use(errorHandler);
 
 connectToDb((err: Error | null) => {
-    console.log(err)
     if (!err) {
       console.log('connected to db')
       app.listen(port, () => {

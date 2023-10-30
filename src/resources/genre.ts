@@ -1,11 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../index';
-import { ObjectId } from 'mongodb';
+import mongose from 'mongoose';
+import BadRequestError from '../errors/BadRequestError';
 
 export const getAllGenresRouter = Router();
 export const addNewGenreRouter = Router();
 export const updateGenreByTitleRouter = Router();
 export const deleteGenreByIdRouter = Router();
+
+const ObjectId = mongose.Types.ObjectId;
 
 /**
  * @swagger
@@ -22,17 +25,17 @@ export const deleteGenreByIdRouter = Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Genre'
- *       500:
+ *       400:
  *         description: Internal server error.
  */
 getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-    try {
-        const genres = await db.collection('genres').find().toArray();
-        res.status(200).json(genres);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+    const genres = await db.collection('genres').find().toArray();
+
+    if (genres.length === 0) {
+        throw new BadRequestError({code: 400, message: "No genres was found." });
     }
+
+    res.status(200).json(genres);
   });
   
   /**
@@ -63,28 +66,30 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       201:
    *         description: Genre added successfully.
    *       400:
+   *        description: Bad request - Genre not provided.
+   *       404:
    *         description: Bad request - Invalid data provided.
    */
   
   addNewGenreRouter.post('/:name', async (req: Request, res: Response): Promise<void> => {
     const name = req.params.name;
+
+    if (!name) {
+        throw new BadRequestError({code: 400, message: "Genre not provided." });
+    }
+
     const genre = {
         "name": name
     };
   
-    if (!name) {
-        res.status(400).json({ error: "Name is required." });
-        return;
+    const genrePosted = await db.collection('genres').insertOne(genre);
+
+    if(!genrePosted.acknowledged) {
+        throw new BadRequestError({code: 404, message: "Invalid data provided." });
     }
-  
-    try {
-        await db.collection('genres').insertOne(genre);
-        const genres = await db.collection('genres').find().toArray();
-        res.status(201).json(genres);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
-    }
+
+    const genres = await db.collection('genres').find().toArray();
+    res.status(201).json(genres);
   });
   
   
@@ -118,32 +123,29 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       400:
    *         description: Bad request - Invalid data provided.
    *       404:
-   *         description: Genre not found.
+   *         description: Genre ${name} was not deleted.
    */
   updateGenreByTitleRouter.put('/:name', async (req: Request, res: Response): Promise<void> => {
     const name = req.params.name;
+    const randomSuffix = Math.floor(Math.random() * 1000); 
     const genre = await db.collection('genres').findOne({ name: name });
   
     if (!genre) {
-        res.status(404).json({ error: "Genre not found." });
-        return;
+        throw new BadRequestError({code: 400, message: "Invalid data provided." });
     }
-  
-    const originalGenreName = req.params.name; 
-    const randomSuffix = Math.floor(Math.random() * 1000); 
   
     const editedGenre = {
-        "name": originalGenreName + " " + randomSuffix
+        "name": name + " " + randomSuffix
     };
   
-    try {
-        await db.collection('genres').updateOne({ name: name }, { $set: editedGenre });
-        const genreCollection = await db.collection('genres').find().toArray();
-        res.status(200).json(genreCollection);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+    const updatedGenre = await db.collection('genres').updateOne({ name: name }, { $set: editedGenre });
+
+    if (!updatedGenre.acknowledged) {
+        throw new BadRequestError({code: 404, message: `Genre ${name} was not deleted.` });
     }
+
+    const genreCollection = await db.collection('genres').find().toArray();
+    res.status(200).json(genreCollection);
   });
   
   
@@ -163,26 +165,27 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *           type: string
    *           format: uuid
    *     responses:
-   *       200:
+   *      200:
    *         description: Genre deleted successfully.
-   *       404:
-   *         description: Genre not found.
+   *      400:
+   *        description: Id not provided.
+   *      404:
+   *         description: Genre was not deleted.
    */
   deleteGenreByIdRouter.delete('/:id', async (req: Request, res: Response): Promise<void> => {
-    const id = req.params.id;
+    const { id } = req.params;
   
-    try {
-        const result = await db.collection('genres').deleteOne({ id: new ObjectId(id) });
-  
-        if (result.deletedCount === 0) {
-            res.status(404).json({ error: "Genre not found." });
-        } else {
-            const genreCollection = await db.collection('genres').find().toArray();
-            res.status(200).json(genreCollection);
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error." });
+    if (!id) {
+        throw new BadRequestError({ code: 400, message: "Id not provided."});
     }
+
+    const result = await db.collection('genres').deleteOne({ id: new ObjectId(id) });
+
+    if(result.deletedCount === 0) {
+        throw new BadRequestError({ code: 404, message: "Genre was not deleted."});
+    }
+
+    const genreCollection = await db.collection('genres').find().toArray();
+    res.status(200).json(genreCollection);
   });
   

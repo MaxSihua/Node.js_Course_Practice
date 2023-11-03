@@ -86,7 +86,6 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *     summary: Add a new movie
    *     description: Add a new movie to the database.
    *     parameters:
-   *       - in: path
    *         name: title
    *         required: true
    *         description: The title of the movie.

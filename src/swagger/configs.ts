@@ -1,5 +1,10 @@
 import swaggerJsdoc, { OAS3Definition } from "swagger-jsdoc";
-import { port } from "../configs";
+
+import { config } from 'dotenv';
+
+config();
+
+const port = process.env.PORT;
 
 const swaggerOptions: OAS3Definition = {
     swaggerDefinition: {

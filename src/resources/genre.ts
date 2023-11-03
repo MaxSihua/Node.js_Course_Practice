@@ -5,6 +5,8 @@ import BadRequestError from '../errors/BadRequestError';
 
 import { Genres } from '../schemas/genres';
 
+import Joi from 'joi';
+
 export const getAllGenresRouter = Router();
 export const addNewGenreRouter = Router();
 export const updateGenreByTitleRouter = Router();
@@ -50,7 +52,6 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *     summary: Add a new genre
    *     description: Add a new genre to the database.
    *     parameters:
-   *       - in: path
    *         name: name
    *         required: true
    *         description: The name of the genre.
@@ -75,25 +76,32 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *       404:
    *         description: Bad request - Invalid data provided.
    */
-  
-  addNewGenreRouter.post('/:name', async (req: Request, res: Response): Promise<void> => {
-    const { name } = req.params;
 
-    if (!name) {
-        throw new BadRequestError({code: 400, message: "Genre not provided." });
+  const schema = Joi.object({
+    name: Joi.string().min(3).max(30).required()
+});
+
+addNewGenreRouter.post('/:name', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { name } = req.params;
+
+        await schema.validateAsync({ name });
+
+        const genre = { "name": name };
+
+        await Genres.create(genre);
+
+        const genres = await Genres.find();
+        res.status(201).json(genres);
+    } catch (error: any) {
+        if (Joi.isError(error)) {
+            const message = error.details[0].message;
+            throw new BadRequestError({ code: 400, message });
+        } else {
+            throw new BadRequestError({ code: 400, message: error.message });
+        }
     }
-
-    const genre = {
-        "name": name
-    };
-
-    await Genres.create(genre).catch((err: Error) => {
-        throw new BadRequestError({code: 404, message: err.message });
-    });
-
-    const genres = await Genres.find();
-    res.status(201).json(genres);
-  });
+});
   
   
   /**

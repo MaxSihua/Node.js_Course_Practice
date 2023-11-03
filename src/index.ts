@@ -1,10 +1,9 @@
-import express, { Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { connectToDb, getDb } from './db';
 import { Connection } from 'mongoose';
 import "express-async-errors";
 
-import { port } from './configs';
 import { aboutRouter } from './resources/about';
 import { healthCheckRouter } from './resources/health-check';
 import { swaggerSpec } from './swagger/configs';
@@ -22,6 +21,12 @@ import { errorHandler } from './middlewares/errors';
 
 const app: Application = express();
 export let db: Connection;
+
+import { config } from 'dotenv';
+
+config(); 
+
+const port = process.env.PORT;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -51,15 +56,19 @@ app.use('/genres', updateGenreByTitleRouter);
 
 app.use('/genres', deleteGenreByIdRouter);
 
+app.use((req: Request, res: Response): void => {
+  res.status(404).json({ error: 'Not Found' });
+});
+
 app.use(errorHandler);
 
 connectToDb((err: Error | null) => {
-    if (!err) {
+  if (!err) {
       console.log('connected to db')
       app.listen(port, () => {
-        console.log(`Example app listening at http://localhost:${port}`);
+          console.log(`Example app listening at http://localhost:${port}`);
       });
-  
+
       db = getDb();
-    }
+  }
 });

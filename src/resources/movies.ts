@@ -122,13 +122,13 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
    *         description: Movie was not added.
    */
   
-  addNewMovieRouter.post('/:title', async (req: Request, res: Response): Promise<void> => {
-    const { title } = req.params;
+  addNewMovieRouter.post('/', async (req: Request, res: Response): Promise<void> => {
+    const { title, genre, releaseDate, description } = req.body;
     const newMovie = new Movie({
       "title": title,
-      "genre": ["Adventure", "Science Fiction"],
-      "releaseDate": new Date('2023-01-01'),
-      "description": 'This is an example movie description.',
+      "genre": genre,
+      "releaseDate": releaseDate,
+      "description": description,
     });
   
     if (!title) {

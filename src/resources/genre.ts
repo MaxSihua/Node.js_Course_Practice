@@ -81,9 +81,9 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
     name: Joi.string().min(3).max(30).required()
 });
 
-addNewGenreRouter.post('/:name', async (req: Request, res: Response): Promise<void> => {
+addNewGenreRouter.post('/', async (req: Request, res: Response): Promise<void> => {
     try {
-        const { name } = req.params;
+        const { name } = req.body;
 
         await schema.validateAsync({ name });
 

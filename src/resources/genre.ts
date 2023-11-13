@@ -47,16 +47,10 @@ getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> =
   
   /**
    * @swagger
-   * /genres/{name}:
+   * /genres:
    *   post:
    *     summary: Add a new genre
    *     description: Add a new genre to the database.
-   *     parameters:
-   *         name: name
-   *         required: true
-   *         description: The name of the genre.
-   *         schema:
-   *           type: string
    *     requestBody:
    *       description: Genre object to add.
    *       required: true

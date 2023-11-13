@@ -81,16 +81,10 @@ getAllMoviesRouter.get('/', async (req: Request, res: Response): Promise<void> =
   
   /**
    * @swagger
-   * /movies/{title}:
+   * /movies:
    *   post:
    *     summary: Add a new movie
    *     description: Add a new movie to the database.
-   *     parameters:
-   *         name: title
-   *         required: true
-   *         description: The title of the movie.
-   *         schema:
-   *           type: string
    *     requestBody:
    *       description: Movie object to add.
    *       required: true

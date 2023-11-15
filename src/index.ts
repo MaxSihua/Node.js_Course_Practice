@@ -1,33 +1,74 @@
-import express, { Request, Response, Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
+import { connectToDb, getDb } from './db';
+import { Connection } from 'mongoose';
+import "express-async-errors";
 
-import { swaggerSpec } from './swagger/configs';
-
-import { healthCheckRouter } from './resources/health-check';
 import { aboutRouter } from './resources/about';
+import { healthCheckRouter } from './resources/health-check';
+import { swaggerSpec } from './swagger/configs';
 import { abcdRouter } from './resources/ab-сd';
-import { port } from './configs';
+import { getAllMoviesRouter,
+  getMoviesByGenreRouter,
+  addNewMovieRouter,
+  updateMovieByTitleRouter,
+  deleteMovieByIdRouter} from './resources/movies';
+import { getAllGenresRouter,
+  addNewGenreRouter,
+  updateGenreByTitleRouter,
+  deleteGenreByIdRouter } from './resources/genre'
+import { errorHandler } from './middlewares/errors';
 
-export const app: Application = express();
+const app: Application = express();
+export let db: Connection;
+
+import { config } from 'dotenv';
+
+config(); 
+
+const port = process.env.PORT;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(express.json());
 
-app.use('/health-check', healthCheckRouter); 
+app.use('/health-check', healthCheckRouter);
 
 app.use('/about', aboutRouter);
 
-app.get('/ab?cd', abcdRouter);
+app.use('/ab?cd', abcdRouter);
+
+app.use('/movies', getAllMoviesRouter);
+
+app.use('/movies/genres', getMoviesByGenreRouter);
+
+app.use('/movies', addNewMovieRouter);
+
+app.use('/movies', updateMovieByTitleRouter);
+
+app.use('/movies', deleteMovieByIdRouter);
+
+app.use('/genres', getAllGenresRouter);
+
+app.use('/genres', addNewGenreRouter);
+
+app.use('/genres', updateGenreByTitleRouter);
+
+app.use('/genres', deleteGenreByIdRouter);
 
 app.use((req: Request, res: Response): void => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-app.use((err: Error, req: Request, res: Response): void => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+connectToDb((err: Error | null) => {
+  if (!err) {
+      console.log('connected to db')
+      app.listen(port, () => {
+          console.log(`Example app listening at http://localhost:${port}`);
+      });
+
+      db = getDb();
+  }
 });

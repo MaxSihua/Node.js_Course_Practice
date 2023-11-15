@@ -12,5 +12,10 @@ export const abcdRouter = Router();
  *         description: ab?cd
  */
 abcdRouter.get('/ab?cd', (req: Request, res: Response): void => {
-  res.send('ab?cd');
+  try {
+    res.send('ab?cd');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });

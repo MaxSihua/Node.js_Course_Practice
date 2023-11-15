@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import BadRequestError from '../errors/BadRequestError';
 
 export const healthCheckRouter = Router();
 
@@ -10,8 +11,25 @@ export const healthCheckRouter = Router();
  *     responses:
  *       200:
  *         description: Server is up and running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Status message
+ *  
+ *       500:
+ *         description: Server is lazy and down.
  */
 healthCheckRouter.get('/', (req: Request, res: Response): void => {
-    res.json({ status: 'ok', message: 'Server is working!' });
-  });
+    const serverIsWorking = true;
+
+    if (!serverIsWorking) {
+        throw new BadRequestError({code: 500, message: "Server is lazy and down." });
+    }
+
+    res.status(200).json({ message: "Server is up and running" });
+});
   

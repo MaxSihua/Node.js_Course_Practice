@@ -34,7 +34,7 @@ const ObjectId = mongose.Types.ObjectId;
  */
 getAllGenresRouter.get('/', async (req: Request, res: Response): Promise<void> => {
     await Genres.find()
-    .then((genres) => {
+    .then((genres: string | any[]) => {
         if (genres.length === 0) {
             throw new BadRequestError({code: 400, message: "No genres was found." });
         }
@@ -132,9 +132,12 @@ addNewGenreRouter.post('/', async (req: Request, res: Response): Promise<void> =
    */
   updateGenreByTitleRouter.put('/:name', async (req: Request, res: Response): Promise<void> => {
     const { name } = req.params;
-    const randomSuffix = Math.floor(Math.random() * 1000); 
+    const suffix = 1; 
     await Genres.findOne({ name: name })
-    .then((genre) => {
+    .then((genre: any) => {
+        if (!genre) {
+            throw new BadRequestError({code: 404, message: `Genre ${name} was not found.` });
+        }
         return genre;
     })
     .catch((err: Error) => {
@@ -142,7 +145,7 @@ addNewGenreRouter.post('/', async (req: Request, res: Response): Promise<void> =
     });
 
     const editedGenre = {
-        "name": name + " " + randomSuffix
+        "name": name + " " + suffix
     };
 
     await Genres.findOneAndUpdate({ name: name }, { $set: editedGenre })
@@ -151,7 +154,7 @@ addNewGenreRouter.post('/', async (req: Request, res: Response): Promise<void> =
     });
 
     const genreCollection = await Genres.find()
-    .then((genres) => {
+    .then((genres: any) => {
         return genres;
     })
     .catch((err: Error) => {
@@ -186,23 +189,20 @@ addNewGenreRouter.post('/', async (req: Request, res: Response): Promise<void> =
    */
   deleteGenreByIdRouter.delete('/:id', async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-  
+
     if (!id) {
         throw new BadRequestError({ code: 400, message: "Id not provided."});
     }
 
-    await Genres.findByIdAndDelete({ _id: new ObjectId(id) })
+    const deletedItem = await Genres.findByIdAndDelete({ _id: new ObjectId(id) })
     .catch((err: Error) => {
         throw new BadRequestError({ code: 404, message: err.message});
     });
 
-    const genreCollection = await Genres.find()
-    .then((genres) => {
-        return genres;
-    })
-    .catch((err: Error) => {
-        throw new BadRequestError({ code: 400, message: err.message});
-    });
-    res.status(200).json(genreCollection);
+    if (!deletedItem) {
+        throw new BadRequestError({ code: 404, message: `Genre was not deleted.`});
+    }
+
+    res.status(200).json(deletedItem);
   });
   

@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { connectToDb, getDb } from './db';
 import { Connection } from 'mongoose';
 import "express-async-errors";
+import { config } from 'dotenv';
 
 import { aboutRouter } from './resources/about';
 import { healthCheckRouter } from './resources/health-check';
@@ -19,14 +20,12 @@ import { getAllGenresRouter,
   deleteGenreByIdRouter } from './resources/genre'
 import { errorHandler } from './middlewares/errors';
 
-const app: Application = express();
+export const app: Application = express();
 export let db: Connection;
-
-import { config } from 'dotenv';
 
 config(); 
 
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -65,10 +64,15 @@ app.use(errorHandler);
 connectToDb((err: Error | null) => {
   if (!err) {
       console.log('connected to db')
-      app.listen(port, () => {
+      if (process.env.NODE_ENV !== 'test') {
+        // Запускаємо сервер лише у разі, якщо не тестовий режим
+        app.listen(port, () => {
           console.log(`Example app listening at http://localhost:${port}`);
-      });
+        });
+      }
 
       db = getDb();
   }
 });
+
+export default app;
